@@ -5,6 +5,12 @@ import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+
+import authRoutes from './routes/authRoutes.js';
+import patientRoutes from './routes/patientRoutes.js';
+import doctorRoutes from './routes/doctorRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { successResponse } from './utils/apiResponse.js';
 
@@ -16,7 +22,7 @@ const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 // 1. Security Headers via Helmet
 app.use(helmet({
-  contentSecurityPolicy: false, // Allows flexible frontend loading in dev
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }));
 
@@ -33,7 +39,7 @@ app.use(hpp());
 
 // 4. Rate Limiting for DDoS / Brute-force Prevention
 const limiter = rateLimit({
-  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 mins
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
   max: Number(process.env.RATE_LIMIT_MAX) || 200,
   standardHeaders: true,
   legacyHeaders: false,
@@ -54,20 +60,26 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
-// Base & Health Check Route
+// Health Check Endpoint
 app.get('/api/health', (req, res) => {
   successResponse(res, 200, 'MedVault Secure API is fully operational', {
     status: 'HEALTHY',
     version: '1.0.0',
     uptime: process.uptime(),
     security: {
+      jwt: 'ENABLED',
+      rbac: 'ENABLED',
       helmet: 'ACTIVE',
-      rateLimiting: 'ACTIVE',
-      cors: 'RESTRICTED',
-      hpp: 'ACTIVE'
+      rateLimiting: 'ACTIVE'
     }
   });
 });
+
+// Mount Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/patients', patientRoutes);
+app.use('/api/doctors', doctorRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Centralized 404 handler
 app.use(notFoundHandler);
@@ -80,8 +92,7 @@ if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`\n======================================================`);
     console.log(`  MEDVAULT SECURE API SERVER RUNNING ON PORT ${PORT}`);
-    console.log(`  Environment : ${process.env.NODE_ENV || 'development'}`);
-    console.log(`  Security    : Helmet, CORS, RateLimit, HPP enabled`);
+    console.log(`  Auth & RBAC : Mounted at /api/auth, /api/patients, etc.`);
     console.log(`  Health Check: http://localhost:${PORT}/api/health`);
     console.log(`======================================================\n`);
   });
