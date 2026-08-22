@@ -9,6 +9,7 @@ import AddRecordModal from './components/AddRecordModal';
 import PrescriptionsManager from './components/PrescriptionsManager';
 import DoctorQueue from './components/DoctorQueue';
 import AdminGovernance from './components/AdminGovernance';
+import RealTimeChat from './components/RealTimeChat';
 import { MedVaultProvider, useMedVaultState } from './context/MedVaultContext';
 import { 
   Activity, 
@@ -31,7 +32,7 @@ import {
   Gauge,
   Lock,
   Trash2,
-  Sparkles
+  Radio
 } from 'lucide-react';
 
 function MedVaultAppContent() {
@@ -53,7 +54,6 @@ function MedVaultAppContent() {
     setActiveTab('dashboard');
   };
 
-  // Filter records based on active query and category
   const filteredRecords = state.records.filter(r => {
     const matchesSearch = 
       r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -125,7 +125,7 @@ function MedVaultAppContent() {
 
         {activeTab === 'dashboard' && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-            {/* Dashboard Header with Global User State */}
+            {/* Dashboard Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-6 border-b border-slate-800 gap-4">
               <div>
                 <div className="flex items-center space-x-3">
@@ -232,22 +232,20 @@ function MedVaultAppContent() {
                 </div>
                 <p className="text-2xl font-bold text-teal-400">100 / 100</p>
                 <p className="text-[11px] text-slate-400 mt-1">
-                  AES-256 GCM Active
+                  AES-256 GCM & WebSocket Active
                 </p>
               </div>
             </div>
 
-            {/* Conditional Role-Specific Section */}
-            {state.user.role === 'DOCTOR' && (
-              <DoctorQueue />
-            )}
+            {/* Role-Specific Sections */}
+            {state.user.role === 'DOCTOR' && <DoctorQueue />}
+            {state.user.role === 'ADMIN' && <AdminGovernance />}
 
-            {state.user.role === 'ADMIN' && (
-              <AdminGovernance />
-            )}
-
-            {/* Prescriptions Manager (Shared across Patient & Doctor) */}
+            {/* Prescriptions Manager */}
             <PrescriptionsManager />
+
+            {/* Real-Time WebSocket Telehealth Chat */}
+            <RealTimeChat />
 
             {/* Records Explorer & Appointments Center */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

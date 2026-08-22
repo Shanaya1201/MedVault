@@ -1,10 +1,12 @@
 import express from 'express';
+import http from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
 
 import authRoutes from './routes/authRoutes.js';
 import patientRoutes from './routes/patientRoutes.js';
@@ -13,10 +15,14 @@ import adminRoutes from './routes/adminRoutes.js';
 
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { successResponse } from './utils/apiResponse.js';
+import { initializeSocket } from './socket.js';
 
 dotenv.config();
 
 const app = express();
+const httpServer = http.createServer(app);
+const io = initializeSocket(httpServer);
+
 const PORT = process.env.PORT || 5000;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
@@ -37,7 +43,7 @@ app.use(cors({
 // 3. HTTP Parameter Pollution Protection
 app.use(hpp());
 
-// 4. Rate Limiting for DDoS / Brute-force Prevention
+// 4. Rate Limiting
 const limiter = rateLimit({
   windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
   max: Number(process.env.RATE_LIMIT_MAX) || 200,
@@ -51,26 +57,26 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// 5. Body Parsers with payload limits
+// 5. Body Parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 6. Request Logging
+// 6. Logging
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {
-  successResponse(res, 200, 'MedVault Secure API is fully operational', {
+  successResponse(res, 200, 'MedVault Secure API & Real-Time Telemetry Operational', {
     status: 'HEALTHY',
     version: '1.0.0',
     uptime: process.uptime(),
     security: {
       jwt: 'ENABLED',
       rbac: 'ENABLED',
-      helmet: 'ACTIVE',
-      rateLimiting: 'ACTIVE'
+      websocket: 'ENABLED',
+      helmet: 'ACTIVE'
     }
   });
 });
@@ -81,21 +87,22 @@ app.use('/api/patients', patientRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Centralized 404 handler
+// Error handlers
 app.use(notFoundHandler);
-
-// Centralized Error handler
 app.use(errorHandler);
 
-// Start server if not running in test runner
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+// Auto-start if executed directly (e.g. `node server.js`)
+const isDirectExecution = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isDirectExecution) {
+  httpServer.listen(PORT, () => {
     console.log(`\n======================================================`);
-    console.log(`  MEDVAULT SECURE API SERVER RUNNING ON PORT ${PORT}`);
-    console.log(`  Auth & RBAC : Mounted at /api/auth, /api/patients, etc.`);
+    console.log(`  MEDVAULT FULL-STACK API & WEBSOCKET ENGINE`);
+    console.log(`  HTTP Port   : ${PORT}`);
+    console.log(`  WebSocket   : ws://localhost:${PORT}`);
     console.log(`  Health Check: http://localhost:${PORT}/api/health`);
     console.log(`======================================================\n`);
   });
 }
 
+export { app, httpServer, io };
 export default app;
