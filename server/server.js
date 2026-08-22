@@ -8,17 +8,26 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 
+import { connectDB } from './config/db.js';
+
 import authRoutes from './routes/authRoutes.js';
 import patientRoutes from './routes/patientRoutes.js';
 import doctorRoutes from './routes/doctorRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
+import recordRoutes from './routes/recordRoutes.js';
+import appointmentRoutes from './routes/appointmentRoutes.js';
+import prescriptionRoutes from './routes/prescriptionRoutes.js';
+import labReportRoutes from './routes/labReportRoutes.js';
 
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { successResponse } from './utils/apiResponse.js';
 import { initializeSocket } from './socket.js';
 
 dotenv.config();
+
+// Connect MongoDB / Mongoose Data Layer
+connectDB();
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -77,6 +86,7 @@ app.get('/api/health', (req, res) => {
       jwt: 'ENABLED',
       rbac: 'ENABLED',
       messaging: 'ENABLED',
+      mongoose: 'INITIALIZED',
       websocket: 'ENABLED',
       helmet: 'ACTIVE'
     }
@@ -89,6 +99,10 @@ app.use('/api/patients', patientRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/records', recordRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/prescriptions', prescriptionRoutes);
+app.use('/api/labs', labReportRoutes);
 
 // Error handlers
 app.use(notFoundHandler);
