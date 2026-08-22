@@ -12,6 +12,7 @@ import authRoutes from './routes/authRoutes.js';
 import patientRoutes from './routes/patientRoutes.js';
 import doctorRoutes from './routes/doctorRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
 
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { successResponse } from './utils/apiResponse.js';
@@ -75,6 +76,7 @@ app.get('/api/health', (req, res) => {
     security: {
       jwt: 'ENABLED',
       rbac: 'ENABLED',
+      messaging: 'ENABLED',
       websocket: 'ENABLED',
       helmet: 'ACTIVE'
     }
@@ -86,6 +88,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Error handlers
 app.use(notFoundHandler);

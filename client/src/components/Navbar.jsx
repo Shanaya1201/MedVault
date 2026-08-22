@@ -12,6 +12,7 @@ export default function Navbar({ onNavigate, activeTab, onOpenLogin }) {
     { id: 'roles', label: 'Role Portals' },
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'records', label: 'Records' },
+    { id: 'messages', label: 'Messages' },
   ];
 
   const handleLogout = () => {

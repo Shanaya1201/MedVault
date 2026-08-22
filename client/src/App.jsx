@@ -11,6 +11,7 @@ import PrescriptionsManager from './components/PrescriptionsManager';
 import DoctorQueue from './components/DoctorQueue';
 import AdminGovernance from './components/AdminGovernance';
 import RealTimeChat from './components/RealTimeChat';
+import MessagingCenter from './components/MessagingCenter';
 import { MedVaultProvider, useMedVaultState } from './context/MedVaultContext';
 import { 
   Activity, 
@@ -497,6 +498,12 @@ function MedVaultAppContent() {
                 ))}
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'messages' && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <MessagingCenter />
           </div>
         )}
       </main>
