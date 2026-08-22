@@ -6,6 +6,7 @@ import RolePreview from './components/RolePreview';
 import Footer from './components/Footer';
 import AppointmentModal from './components/AppointmentModal';
 import AddRecordModal from './components/AddRecordModal';
+import LoginModal from './components/LoginModal';
 import PrescriptionsManager from './components/PrescriptionsManager';
 import DoctorQueue from './components/DoctorQueue';
 import AdminGovernance from './components/AdminGovernance';
@@ -32,13 +33,15 @@ import {
   Gauge,
   Lock,
   Trash2,
-  Radio
+  Radio,
+  LogIn
 } from 'lucide-react';
 
 function MedVaultAppContent() {
   const [activeTab, setActiveTab] = useState('home');
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
 
@@ -51,6 +54,10 @@ function MedVaultAppContent() {
 
   const handleRoleSelect = (role) => {
     dispatch({ type: 'SET_USER_ROLE', payload: role });
+    setActiveTab('dashboard');
+  };
+
+  const handleLoginSuccess = (userRole) => {
     setActiveTab('dashboard');
   };
 
@@ -99,13 +106,17 @@ function MedVaultAppContent() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-500 selection:text-slate-950">
       {/* Top Navbar */}
-      <Navbar onNavigate={handleNavigate} activeTab={activeTab} />
+      <Navbar 
+        onNavigate={handleNavigate} 
+        activeTab={activeTab} 
+        onOpenLogin={() => setIsLoginModalOpen(true)}
+      />
 
       {/* Main Content Area */}
       <main className="flex-1">
         {activeTab === 'home' && (
           <div>
-            <Hero onExplore={handleNavigate} />
+            <Hero onExplore={handleNavigate} onOpenLogin={() => setIsLoginModalOpen(true)} />
             <FeatureGrid />
             <RolePreview onSelectRole={handleRoleSelect} />
           </div>
@@ -130,18 +141,18 @@ function MedVaultAppContent() {
               <div>
                 <div className="flex items-center space-x-3">
                   <span className="text-xs uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
-                    Role: {state.user.role}
+                    Authenticated Role: {state.user.role}
                   </span>
                   <span className="text-xs text-slate-400 font-mono">
-                    User: {state.user.name} ({state.user.id})
+                    User: {state.user.name} ({state.user.email})
                   </span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
-                  MedVault Unified Healthcare Portal
+                  MedVault Healthcare Portal
                 </h2>
               </div>
 
-              {/* Dynamic Role Switcher */}
+              {/* Dynamic Role Switcher / Login Trigger */}
               <div className="flex items-center space-x-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 shadow-lg">
                 {['PATIENT', 'DOCTOR', 'ADMIN'].map((role) => (
                   <button
@@ -153,9 +164,16 @@ function MedVaultAppContent() {
                         : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                     }`}
                   >
-                    {role}
+                    {role === 'ADMIN' ? 'GOVERNMENT / ADMIN' : role}
                   </button>
                 ))}
+                <button
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-400 hover:bg-emerald-950/60 border border-emerald-800/40 flex items-center space-x-1"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Switch User</span>
+                </button>
               </div>
             </div>
 
@@ -232,7 +250,7 @@ function MedVaultAppContent() {
                 </div>
                 <p className="text-2xl font-bold text-teal-400">100 / 100</p>
                 <p className="text-[11px] text-slate-400 mt-1">
-                  AES-256 GCM & WebSocket Active
+                  AES-256 GCM & JWT Active
                 </p>
               </div>
             </div>
@@ -484,6 +502,12 @@ function MedVaultAppContent() {
       </main>
 
       {/* Modals */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
+
       <AppointmentModal
         isOpen={isAppointmentModalOpen}
         onClose={() => setIsAppointmentModalOpen(false)}

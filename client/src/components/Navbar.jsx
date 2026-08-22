@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Shield, Menu, X, Activity, Lock, UserCheck, ChevronRight } from 'lucide-react';
+import { Shield, Menu, X, Activity, Lock, UserCheck, ChevronRight, LogIn, LogOut, User } from 'lucide-react';
+import { useMedVaultState } from '../context/MedVaultContext';
 
-export default function Navbar({ onNavigate, activeTab }) {
+export default function Navbar({ onNavigate, activeTab, onOpenLogin }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { state, dispatch } = useMedVaultState();
 
   const navLinks = [
     { id: 'home', label: 'Home' },
@@ -11,6 +13,11 @@ export default function Navbar({ onNavigate, activeTab }) {
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'records', label: 'Records' },
   ];
+
+  const handleLogout = () => {
+    dispatch({ type: 'LOGOUT' });
+    onNavigate?.('home');
+  };
 
   return (
     <header className="sticky top-0 z-50 glass-panel border-b border-slate-800/80">
@@ -51,18 +58,47 @@ export default function Navbar({ onNavigate, activeTab }) {
             ))}
           </nav>
 
-          {/* Right Action */}
+          {/* Right Actions: Login / Profile / Launch */}
           <div className="hidden md:flex items-center space-x-3">
-            <div className="flex items-center space-x-2 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-3 py-1.5 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>System Operational</span>
-            </div>
+            {state.isAuthenticated ? (
+              <div className="flex items-center space-x-3">
+                <div 
+                  onClick={() => onNavigate?.('dashboard')}
+                  className="flex items-center space-x-2.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 cursor-pointer hover:border-emerald-500/40 transition"
+                >
+                  <div className="w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-xs font-bold">
+                    {state.user.name?.charAt(0) || 'U'}
+                  </div>
+                  <div className="text-left">
+                    <span className="text-xs font-semibold text-slate-200 block leading-tight">{state.user.name}</span>
+                    <span className="text-[10px] text-emerald-400 font-mono block leading-tight">{state.user.role}</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleLogout}
+                  title="Sign Out"
+                  className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 border border-transparent hover:border-rose-900/40 transition"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={onOpenLogin}
+                className="flex items-center space-x-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition shadow-sm"
+              >
+                <LogIn className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Sign In</span>
+              </button>
+            )}
+
             <button 
               onClick={() => onNavigate?.('dashboard')}
-              className="flex items-center space-x-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all duration-200"
+              className="flex items-center space-x-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all duration-200"
             >
               <span>Launch Portal</span>
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -97,7 +133,31 @@ export default function Navbar({ onNavigate, activeTab }) {
               {link.label}
             </button>
           ))}
-          <div className="pt-2 border-t border-slate-800">
+          <div className="pt-2 border-t border-slate-800 space-y-2">
+            {!state.isAuthenticated ? (
+              <button
+                onClick={() => {
+                  onOpenLogin();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 font-semibold"
+              >
+                <LogIn className="w-4 h-4 text-emerald-400" />
+                <span>Sign In</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-lg bg-rose-950/40 border border-rose-800 text-rose-300 font-semibold"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out ({state.user.name})</span>
+              </button>
+            )}
+
             <button
               onClick={() => {
                 onNavigate?.('dashboard');

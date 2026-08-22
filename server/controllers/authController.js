@@ -56,21 +56,26 @@ export const register = async (req, res, next) => {
 };
 
 /**
- * Login User
+ * Login User (Email-based, Role-aware)
  * POST /api/auth/login
  */
 export const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
     const user = store.users.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (!user) {
-      throw new ApiError(401, 'Invalid credentials provided. Email not found.');
+      throw new ApiError(401, 'Invalid credentials provided. No account found for this email address.');
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      throw new ApiError(401, 'Invalid credentials provided. Password mismatch.');
+      throw new ApiError(401, 'Invalid credentials provided. Incorrect password.');
+    }
+
+    // Role validation if role is specified in request
+    if (role && role.toUpperCase() !== user.role) {
+      throw new ApiError(403, `Access Denied. Account belongs to '${user.role}' role, but '${role.toUpperCase()}' portal was selected.`);
     }
 
     const token = jwt.sign(
@@ -82,7 +87,7 @@ export const login = async (req, res, next) => {
     const safeUser = { ...user };
     delete safeUser.password;
 
-    successResponse(res, 200, 'Authentication successful', {
+    successResponse(res, 200, `Authentication successful as ${user.role}`, {
       user: safeUser,
       token
     });

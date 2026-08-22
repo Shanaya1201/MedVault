@@ -2,10 +2,12 @@ import React, { createContext, useContext, useReducer, useEffect } from 'react';
 
 // Initial Application State
 const initialState = {
+  isAuthenticated: true,
+  token: localStorage.getItem('medvault_token') || 'demo_token_authenticated',
   user: {
-    id: 'USR-89421',
+    id: 'USR-PATIENT-001',
     name: 'Alex Johnson',
-    email: 'alex.johnson@medvault.health',
+    email: 'patient@medvault.health',
     role: 'PATIENT',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
     bloodType: 'O+',
@@ -87,7 +89,7 @@ const initialState = {
       id: 'APT-1001',
       doctor: 'Dr. Sarah Mitchell (Cardiology)',
       patient: 'Alex Johnson',
-      patientId: 'USR-89421',
+      patientId: 'USR-PATIENT-001',
       date: '2026-11-02',
       time: '10:30 AM',
       type: 'Cardiology Follow-up',
@@ -98,7 +100,7 @@ const initialState = {
       id: 'APT-1002',
       doctor: 'Dr. Robert Vance (Endocrinology)',
       patient: 'Alex Johnson',
-      patientId: 'USR-89421',
+      patientId: 'USR-PATIENT-001',
       date: '2026-11-15',
       time: '02:00 PM',
       type: 'Routine Metabolic Review',
@@ -133,13 +135,68 @@ const initialState = {
 // State Reducer
 function medVaultReducer(state, action) {
   switch (action.type) {
+    case 'LOGIN_SUCCESS':
+      if (action.payload.token) {
+        localStorage.setItem('medvault_token', action.payload.token);
+      }
+      return {
+        ...state,
+        isAuthenticated: true,
+        token: action.payload.token || 'authenticated_token',
+        user: {
+          ...state.user,
+          ...action.payload.user
+        },
+        notifications: [
+          {
+            id: Date.now(),
+            message: `Welcome back, ${action.payload.user.name}. Authenticated via encrypted JWT session.`,
+            time: 'Just now',
+            unread: true,
+            type: 'info'
+          },
+          ...state.notifications
+        ]
+      };
+
+    case 'LOGOUT':
+      localStorage.removeItem('medvault_token');
+      return {
+        ...state,
+        isAuthenticated: false,
+        token: null,
+        user: {
+          id: '',
+          name: 'Guest User',
+          email: '',
+          role: 'GUEST'
+        }
+      };
+
     case 'SET_USER_ROLE':
+      let roleUser = {
+        role: action.payload,
+        name: 'Alex Johnson',
+        email: 'patient@medvault.health'
+      };
+      if (action.payload === 'DOCTOR') {
+        roleUser = {
+          role: 'DOCTOR',
+          name: 'Dr. Sarah Mitchell, MD',
+          email: 'doctor@medvault.health'
+        };
+      } else if (action.payload === 'ADMIN') {
+        roleUser = {
+          role: 'ADMIN',
+          name: 'System Administrator',
+          email: 'admin@medvault.health'
+        };
+      }
       return {
         ...state,
         user: {
           ...state.user,
-          role: action.payload,
-          name: action.payload === 'DOCTOR' ? 'Dr. Sarah Mitchell, MD' : (action.payload === 'ADMIN' ? 'System Administrator' : 'Alex Johnson')
+          ...roleUser
         }
       };
 
