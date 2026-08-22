@@ -6,7 +6,10 @@ import RolePreview from './components/RolePreview';
 import Footer from './components/Footer';
 import AppointmentModal from './components/AppointmentModal';
 import AddRecordModal from './components/AddRecordModal';
-import { useMedVault } from './hooks/useMedVault';
+import PrescriptionsManager from './components/PrescriptionsManager';
+import DoctorQueue from './components/DoctorQueue';
+import AdminGovernance from './components/AdminGovernance';
+import { MedVaultProvider, useMedVaultState } from './context/MedVaultContext';
 import { 
   Activity, 
   Calendar, 
@@ -26,37 +29,19 @@ import {
   Droplets,
   Wind,
   Gauge,
-  Check,
   Lock,
-  Download,
-  Trash2
+  Trash2,
+  Sparkles
 } from 'lucide-react';
 
-export default function App() {
+function MedVaultAppContent() {
   const [activeTab, setActiveTab] = useState('home');
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
-  const [selectedRecordDetails, setSelectedRecordDetails] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
 
-  // Hook-driven application state
-  const {
-    userRole,
-    setUserRole,
-    records,
-    filteredRecords,
-    recordStats,
-    appointments,
-    notifications,
-    vitals,
-    searchQuery,
-    setSearchQuery,
-    categoryFilter,
-    setCategoryFilter,
-    addRecord,
-    bookAppointment,
-    markAllNotificationsRead,
-    renderCount
-  } = useMedVault();
+  const { state, dispatch } = useMedVaultState();
 
   const handleNavigate = (tab) => {
     setActiveTab(tab);
@@ -64,8 +49,51 @@ export default function App() {
   };
 
   const handleRoleSelect = (role) => {
-    setUserRole(role);
+    dispatch({ type: 'SET_USER_ROLE', payload: role });
     setActiveTab('dashboard');
+  };
+
+  // Filter records based on active query and category
+  const filteredRecords = state.records.filter(r => {
+    const matchesSearch = 
+      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.doctor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.notes.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesCategory = categoryFilter === 'ALL' || r.category === categoryFilter;
+
+    return matchesSearch && matchesCategory;
+  });
+
+  const handleBookAppointment = (aptData) => {
+    dispatch({
+      type: 'ADD_APPOINTMENT',
+      payload: {
+        id: `APT-${1000 + state.appointments.length + 1}`,
+        doctor: aptData.doctor,
+        patient: state.user.name,
+        patientId: state.user.id,
+        date: aptData.date,
+        time: aptData.time,
+        type: aptData.type,
+        status: 'Confirmed',
+        room: 'Virtual Telehealth Suite'
+      }
+    });
+  };
+
+  const handleAddRecord = (recordData) => {
+    dispatch({
+      type: 'ADD_RECORD',
+      payload: {
+        ...recordData,
+        id: `REC-2026-${String(state.records.length + 1).padStart(3, '0')}`,
+        date: new Date().toISOString().split('T')[0],
+        status: 'Verified',
+        confidentiality: 'Standard'
+      }
+    });
   };
 
   return (
@@ -96,31 +124,31 @@ export default function App() {
         )}
 
         {activeTab === 'dashboard' && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Dashboard Header */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            {/* Dashboard Header with Global User State */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-6 border-b border-slate-800 gap-4">
               <div>
                 <div className="flex items-center space-x-3">
-                  <span className="text-xs uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
-                    Active Session: {userRole}
+                  <span className="text-xs uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
+                    Role: {state.user.role}
                   </span>
                   <span className="text-xs text-slate-400 font-mono">
-                    Hook Renders: {renderCount} | Sync: Connected
+                    User: {state.user.name} ({state.user.id})
                   </span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
-                  MedVault Healthcare Portal
+                  MedVault Unified Healthcare Portal
                 </h2>
               </div>
 
-              {/* Role Switcher in Dashboard */}
+              {/* Dynamic Role Switcher */}
               <div className="flex items-center space-x-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 shadow-lg">
                 {['PATIENT', 'DOCTOR', 'ADMIN'].map((role) => (
                   <button
                     key={role}
-                    onClick={() => setUserRole(role)}
+                    onClick={() => dispatch({ type: 'SET_USER_ROLE', payload: role })}
                     className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                      userRole === role
+                      state.user.role === role
                         ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
                         : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                     }`}
@@ -131,94 +159,105 @@ export default function App() {
               </div>
             </div>
 
-            {/* Live Vital Telemetry Bar (Demonstrating useEffect real-time sync) */}
-            <div className="my-6 p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-slate-900/90 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+            {/* Live Vital Telemetry Bar */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-slate-900/90 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center space-x-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-                <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">Live Vital Telemetry</span>
-                <span className="text-[10px] text-slate-500 font-mono">Synced at {vitals.timestamp}</span>
+                <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">Live Health Telemetry</span>
+                <span className="text-[10px] text-slate-500 font-mono">Synced {state.vitals.timestamp}</span>
               </div>
               <div className="flex flex-wrap items-center gap-6 text-xs">
                 <div className="flex items-center space-x-2">
                   <HeartPulse className="w-4 h-4 text-rose-400 animate-pulse" />
                   <span className="text-slate-400">Heart Rate:</span>
-                  <span className="font-bold text-white font-mono">{vitals.heartRate} bpm</span>
+                  <span className="font-bold text-white font-mono">{state.vitals.heartRate} bpm</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Gauge className="w-4 h-4 text-cyan-400" />
-                  <span className="text-slate-400">Blood Pressure:</span>
-                  <span className="font-bold text-white font-mono">{vitals.bloodPressure} mmHg</span>
+                  <span className="text-slate-400">BP:</span>
+                  <span className="font-bold text-white font-mono">{state.vitals.bloodPressure} mmHg</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Wind className="w-4 h-4 text-emerald-400" />
                   <span className="text-slate-400">SpO2:</span>
-                  <span className="font-bold text-white font-mono">{vitals.oxygenLevel}%</span>
+                  <span className="font-bold text-white font-mono">{state.vitals.oxygenLevel}%</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Droplets className="w-4 h-4 text-amber-400" />
-                  <span className="text-slate-400">Blood Glucose:</span>
-                  <span className="font-bold text-white font-mono">{vitals.glucose} mg/dL</span>
+                  <span className="text-slate-400">Glucose:</span>
+                  <span className="font-bold text-white font-mono">{state.vitals.glucose} mg/dL</span>
                 </div>
               </div>
             </div>
 
             {/* Quick Metrics Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="glass-card p-5 rounded-2xl">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-slate-400">Total Vault Records</span>
+                  <span className="text-xs font-medium text-slate-400">Medical Records</span>
                   <FileText className="w-5 h-5 text-emerald-400" />
                 </div>
-                <p className="text-2xl font-bold text-white">{recordStats.total} Records</p>
+                <p className="text-2xl font-bold text-white">{state.records.length} Verified</p>
                 <p className="text-[11px] text-emerald-400 flex items-center mt-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> {recordStats.verifiedCount} Verified / Decrypted
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Client-Side Sealed
                 </p>
               </div>
 
               <div className="glass-card p-5 rounded-2xl">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-slate-400">Upcoming Appointments</span>
+                  <span className="text-xs font-medium text-slate-400">Consultations</span>
                   <Calendar className="w-5 h-5 text-cyan-400" />
                 </div>
-                <p className="text-2xl font-bold text-white">{appointments.length} Scheduled</p>
+                <p className="text-2xl font-bold text-white">{state.appointments.length} Active</p>
                 <p className="text-[11px] text-cyan-300 flex items-center mt-1">
-                  <Clock className="w-3.5 h-3.5 mr-1" /> Next: {appointments[0]?.date || 'None'}
+                  <Clock className="w-3.5 h-3.5 mr-1" /> Next: {state.appointments[0]?.date || 'None'}
                 </p>
               </div>
 
               <div className="glass-card p-5 rounded-2xl">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-slate-400">Active Prescriptions</span>
+                  <span className="text-xs font-medium text-slate-400">Prescriptions</span>
                   <Pill className="w-5 h-5 text-purple-400" />
                 </div>
-                <p className="text-2xl font-bold text-white">{recordStats.prescriptionCount} Active Rx</p>
+                <p className="text-2xl font-bold text-white">{state.prescriptions.length} Active Rx</p>
                 <p className="text-[11px] text-purple-300 flex items-center mt-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Refills Synced with Pharmacy
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Pharmacy Synced
                 </p>
               </div>
 
               <div className="glass-card p-5 rounded-2xl">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-slate-400">Security Health Score</span>
+                  <span className="text-xs font-medium text-slate-400">System Security</span>
                   <ShieldCheck className="w-5 h-5 text-teal-400" />
                 </div>
                 <p className="text-2xl font-bold text-teal-400">100 / 100</p>
                 <p className="text-[11px] text-slate-400 mt-1">
-                  AES-256 GCM & RBAC Active
+                  AES-256 GCM Active
                 </p>
               </div>
             </div>
 
-            {/* Records & Scheduling Center */}
+            {/* Conditional Role-Specific Section */}
+            {state.user.role === 'DOCTOR' && (
+              <DoctorQueue />
+            )}
+
+            {state.user.role === 'ADMIN' && (
+              <AdminGovernance />
+            )}
+
+            {/* Prescriptions Manager (Shared across Patient & Doctor) */}
+            <PrescriptionsManager />
+
+            {/* Records Explorer & Appointments Center */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Records Explorer Column */}
               <div className="lg:col-span-2 glass-panel rounded-3xl p-6 sm:p-7 border border-slate-800 space-y-5">
-                {/* Search & Category Filter Bar */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-800 gap-3">
                   <div>
                     <h3 className="text-lg font-bold text-white">Health Vault Records</h3>
                     <p className="text-xs text-slate-400">
-                      Showing {filteredRecords.length} of {records.length} records (useMemo optimized)
+                      Showing {filteredRecords.length} of {state.records.length} records in state
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -234,7 +273,6 @@ export default function App() {
 
                 {/* Filter Controls */}
                 <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-                  {/* Category Pills */}
                   <div className="flex flex-wrap items-center gap-1.5">
                     {['ALL', 'EHR', 'Lab', 'Prescription', 'Radiology'].map((cat) => (
                       <button
@@ -251,12 +289,11 @@ export default function App() {
                     ))}
                   </div>
 
-                  {/* Search Input */}
                   <div className="relative w-full sm:w-60">
                     <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500" />
                     <input
                       type="text"
-                      placeholder="Search record title, doctor, tags..."
+                      placeholder="Search records in state..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
@@ -269,8 +306,7 @@ export default function App() {
                   {filteredRecords.map((rec) => (
                     <div 
                       key={rec.id} 
-                      className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/40 transition-all space-y-2 cursor-pointer"
-                      onClick={() => setSelectedRecordDetails(rec)}
+                      className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/40 transition-all space-y-2"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-start space-x-3">
@@ -293,16 +329,18 @@ export default function App() {
                             {rec.status}
                           </span>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              alert(`Decrypted Record: ${rec.title}\n\nClinical Notes: ${rec.notes}`);
-                            }}
-                            className="px-3 py-1 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+                            onClick={() => dispatch({ type: 'DELETE_RECORD', payload: rec.id })}
+                            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 rounded-lg transition"
+                            title="Delete Record"
                           >
-                            View
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
+
+                      <p className="text-xs text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
+                        {rec.notes}
+                      </p>
 
                       <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[10px]">
                         {rec.tags.map((t, idx) => (
@@ -310,9 +348,6 @@ export default function App() {
                             #{t}
                           </span>
                         ))}
-                        <span className="text-slate-500 ml-auto italic">
-                          AES-256 Verified
-                        </span>
                       </div>
                     </div>
                   ))}
@@ -344,7 +379,7 @@ export default function App() {
                   </div>
 
                   <div className="space-y-3">
-                    {appointments.map((apt) => (
+                    {state.appointments.map((apt) => (
                       <div key={apt.id} className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs space-y-1.5">
                         <div className="flex justify-between items-start">
                           <span className="font-semibold text-white">{apt.doctor}</span>
@@ -367,10 +402,10 @@ export default function App() {
                   <div className="flex items-center justify-between">
                     <h3 className="text-base font-bold text-white flex items-center space-x-2">
                       <Bell className="w-4 h-4 text-amber-400" />
-                      <span>Vault Audit Notifications</span>
+                      <span>Audit Notifications</span>
                     </h3>
                     <button
-                      onClick={markAllNotificationsRead}
+                      onClick={() => dispatch({ type: 'MARK_ALL_NOTIFICATIONS_READ' })}
                       className="text-[11px] text-emerald-400 hover:underline"
                     >
                       Mark all read
@@ -378,7 +413,7 @@ export default function App() {
                   </div>
 
                   <div className="space-y-2.5">
-                    {notifications.map((n) => (
+                    {state.notifications.map((n) => (
                       <div 
                         key={n.id} 
                         className={`p-3 rounded-xl border text-xs transition-colors ${
@@ -404,7 +439,7 @@ export default function App() {
               <div className="flex items-center justify-between pb-4 border-b border-slate-800">
                 <div>
                   <h2 className="text-2xl font-bold text-white">Full Encrypted Record Vault</h2>
-                  <p className="text-xs text-slate-400">Zero-knowledge client-side encryption store</p>
+                  <p className="text-xs text-slate-400">Zero-knowledge client-side encryption store in state</p>
                 </div>
                 <button 
                   onClick={() => setIsRecordModalOpen(true)}
@@ -416,7 +451,7 @@ export default function App() {
               </div>
 
               <div className="space-y-4">
-                {records.map((r) => (
+                {state.records.map((r) => (
                   <div key={r.id} className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-emerald-500/40 transition-all space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
@@ -439,7 +474,7 @@ export default function App() {
                       </div>
                     </div>
                     <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs text-slate-300">
-                      <span className="text-slate-500 font-mono text-[10px] block mb-1">Encrypted Payload Preview:</span>
+                      <span className="text-slate-500 font-mono text-[10px] block mb-1">Encrypted Payload Content:</span>
                       <p>{r.notes}</p>
                     </div>
                   </div>
@@ -450,22 +485,29 @@ export default function App() {
         )}
       </main>
 
-      {/* Appointment Modal */}
+      {/* Modals */}
       <AppointmentModal
         isOpen={isAppointmentModalOpen}
         onClose={() => setIsAppointmentModalOpen(false)}
-        onBook={bookAppointment}
+        onBook={handleBookAppointment}
       />
 
-      {/* Add Record Modal */}
       <AddRecordModal
         isOpen={isRecordModalOpen}
         onClose={() => setIsRecordModalOpen(false)}
-        onAdd={addRecord}
+        onAdd={handleAddRecord}
       />
 
       {/* Modern Footer */}
       <Footer />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <MedVaultProvider>
+      <MedVaultAppContent />
+    </MedVaultProvider>
   );
 }
