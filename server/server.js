@@ -19,6 +19,7 @@ import recordRoutes from './routes/recordRoutes.js';
 import appointmentRoutes from './routes/appointmentRoutes.js';
 import prescriptionRoutes from './routes/prescriptionRoutes.js';
 import labReportRoutes from './routes/labReportRoutes.js';
+import announcementRoutes from './routes/announcementRoutes.js';
 
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { successResponse } from './utils/apiResponse.js';
@@ -33,8 +34,10 @@ const app = express();
 const httpServer = http.createServer(app);
 const io = initializeSocket(httpServer);
 
+// Store io on app instance so controllers can access it
+app.set('io', io);
+
 const PORT = process.env.PORT || 5000;
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 // 1. Security Headers via Helmet
 app.use(helmet({
@@ -44,7 +47,7 @@ app.use(helmet({
 
 // 2. Cross-Origin Resource Sharing (CORS)
 app.use(cors({
-  origin: [CLIENT_URL, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+  origin: true, // Allow all origins in local development
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -56,7 +59,7 @@ app.use(hpp());
 // 4. Rate Limiting
 const limiter = rateLimit({
   windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: Number(process.env.RATE_LIMIT_MAX) || 200,
+  max: Number(process.env.RATE_LIMIT_MAX) || 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -103,6 +106,7 @@ app.use('/api/records', recordRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/labs', labReportRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 // Error handlers
 app.use(notFoundHandler);

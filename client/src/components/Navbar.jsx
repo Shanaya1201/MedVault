@@ -7,6 +7,7 @@ export default function Navbar({ onNavigate, activeTab, onOpenLogin }) {
   const { state, dispatch } = useMedVaultState();
 
   const navLinks = [
+    { id: 'welcome', label: 'Intro' },
     { id: 'home', label: 'Home' },
     { id: 'features', label: 'Features' },
     { id: 'roles', label: 'Role Portals' },

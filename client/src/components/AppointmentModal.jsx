@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Calendar, Clock, User, Stethoscope, CheckCircle, Shield } from 'lucide-react';
 
-export default function AppointmentModal({ isOpen, onClose, onBook }) {
-  const [doctor, setDoctor] = useState('Dr. Sarah Mitchell, MD (Cardiology)');
+export default function AppointmentModal({ isOpen, onClose, onBook, onAdd, initialDoctor }) {
+  const [doctor, setDoctor] = useState(initialDoctor || 'Dr. Sarah Mitchell, MD (Cardiology)');
   const [date, setDate] = useState('2026-11-10');
   const [time, setTime] = useState('11:00 AM');
   const [type, setType] = useState('Comprehensive Checkup');
@@ -11,6 +11,12 @@ export default function AppointmentModal({ isOpen, onClose, onBook }) {
 
   // useRef to focus on the first select when modal opens
   const firstInputRef = useRef(null);
+
+  useEffect(() => {
+    if (initialDoctor) {
+      setDoctor(initialDoctor);
+    }
+  }, [initialDoctor, isOpen]);
 
   useEffect(() => {
     if (isOpen && firstInputRef.current) {
@@ -24,10 +30,13 @@ export default function AppointmentModal({ isOpen, onClose, onBook }) {
     e.preventDefault();
     setIsSubmitting(true);
     setTimeout(() => {
-      onBook({ doctor, date, time, type, notes });
+      const bookFn = onBook || onAdd;
+      if (typeof bookFn === 'function') {
+        bookFn({ doctor, date, time, type, notes });
+      }
       setIsSubmitting(false);
-      onClose();
-    }, 600);
+      onClose?.();
+    }, 400);
   };
 
   return (
