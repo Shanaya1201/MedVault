@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Lock, Mail, Shield, User, Stethoscope, ShieldAlert, CheckCircle, ArrowRight, AlertCircle, Key } from 'lucide-react';
 import { useMedVaultState } from '../context/MedVaultContext';
 
-export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
+export default function LoginModal({ isOpen, onClose, onLoginSuccess, initialRole = 'PATIENT' }) {
   const { dispatch } = useMedVaultState();
-  const [selectedRole, setSelectedRole] = useState('PATIENT');
+  const [selectedRole, setSelectedRole] = useState(initialRole);
   const [email, setEmail] = useState('patient@medvault.health');
   const [password, setPassword] = useState('PatientPass123!');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-
-  if (!isOpen) return null;
 
   const rolePresets = {
     PATIENT: {
@@ -42,6 +40,14 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     }
   };
 
+  useEffect(() => {
+    if (initialRole && rolePresets[initialRole]) {
+      handleRoleSelect(initialRole);
+    }
+  }, [initialRole, isOpen]);
+
+  if (!isOpen) return null;
+
   const handleRoleSelect = (roleKey) => {
     setSelectedRole(roleKey);
     setErrorMsg('');
@@ -56,7 +62,6 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     setErrorMsg('');
 
     try {
-      // Attempt backend authentication
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,16 +81,13 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         onLoginSuccess?.(data.data.user.role);
         onClose();
       } else {
-        // If credentials mismatch or error
         if (data.message) {
           setErrorMsg(data.message);
         } else {
-          // Client fallback matching
           fallbackLogin();
         }
       }
     } catch (err) {
-      // Fallback for offline/local simulation
       fallbackLogin();
     } finally {
       setIsLoading(false);
@@ -132,7 +134,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
             MedVault Access Portal
           </h3>
           <p className="text-xs text-slate-400">
-            Secure email authentication with Role-Based Access Control
+            Secure login for {selectedRole === 'PATIENT' ? 'Patients' : (selectedRole === 'DOCTOR' ? 'Attending Physicians' : 'Administrators')}
           </p>
         </div>
 

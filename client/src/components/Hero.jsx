@@ -51,30 +51,32 @@ export default function Hero({ onExplore, onOpenLogin }) {
               MedVault provides a unified, zero-knowledge clinical platform connecting patients, attending physicians, and government auditors with encrypted health records, doctor-patient messaging, and live telemetry tracking.
             </p>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+            {/* Dedicated Role-Based Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
+              <button
+                onClick={() => onOpenLogin?.('PATIENT')}
+                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-bold flex items-center justify-center space-x-2 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all duration-200"
+              >
+                <User className="w-4 h-4" />
+                <span>Login as Patient</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => onOpenLogin?.('DOCTOR')}
+                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-cyan-700/60 font-bold flex items-center justify-center space-x-2 shadow-lg shadow-cyan-950/40 transition-all duration-200"
+              >
+                <Stethoscope className="w-4 h-4 text-cyan-400" />
+                <span>Login as Doctor</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
               <button
                 onClick={() => onExplore?.('dashboard')}
-                className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold flex items-center justify-center space-x-2 shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all duration-200"
+                className="w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate-700 text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all"
               >
-                <span>Launch Clinical Portal</span>
-                <ArrowRight className="w-5 h-5" />
-              </button>
-
-              <button
-                onClick={onOpenLogin}
-                className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700 font-semibold flex items-center justify-center space-x-2 transition-all duration-200 shadow-md"
-              >
-                <LogIn className="w-4 h-4 text-emerald-400" />
-                <span>Sign In by Role</span>
-              </button>
-
-              <button
-                onClick={() => onExplore?.('messages')}
-                className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-slate-900/60 hover:bg-slate-800 text-emerald-300 border border-emerald-900/50 text-xs font-semibold flex items-center justify-center space-x-2 transition-all"
-              >
-                <MessageSquare className="w-4 h-4" />
-                <span>Doctor Chat</span>
+                <Activity className="w-4 h-4 text-emerald-400" />
+                <span>Explore Portal</span>
               </button>
             </div>
 
