@@ -7,12 +7,13 @@ import {
   ArrowRight, 
   Zap, 
   Users, 
+  User,
   Stethoscope, 
   Activity, 
   MessageSquare, 
   CheckCircle2, 
-  Sparkles,
-  ShieldAlert,
+  Sparkles, 
+  ShieldAlert, 
   LogIn
 } from 'lucide-react';
 
