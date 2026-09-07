@@ -40,21 +40,19 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, initialRol
     }
   };
 
+  const handleRoleSelect = (roleKey) => {
+    setSelectedRole(roleKey);
+    setErrorMsg('');
+    const preset = rolePresets[roleKey] || rolePresets.PATIENT;
+    setEmail(preset.email);
+    setPassword(preset.password);
+  };
+
   useEffect(() => {
     if (initialRole && rolePresets[initialRole]) {
       handleRoleSelect(initialRole);
     }
   }, [initialRole, isOpen]);
-
-  if (!isOpen) return null;
-
-  const handleRoleSelect = (roleKey) => {
-    setSelectedRole(roleKey);
-    setErrorMsg('');
-    const preset = rolePresets[roleKey];
-    setEmail(preset.email);
-    setPassword(preset.password);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -95,7 +93,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, initialRol
   };
 
   const fallbackLogin = () => {
-    const preset = rolePresets[selectedRole];
+    const preset = rolePresets[selectedRole] || rolePresets.PATIENT;
     dispatch({
       type: 'LOGIN_SUCCESS',
       payload: {
@@ -112,7 +110,9 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, initialRol
     onClose();
   };
 
-  const currentPreset = rolePresets[selectedRole];
+  if (!isOpen) return null;
+
+  const currentPreset = rolePresets[selectedRole] || rolePresets.PATIENT;
   const IconComponent = currentPreset.icon;
 
   return (
