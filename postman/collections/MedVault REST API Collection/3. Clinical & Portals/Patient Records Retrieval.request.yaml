@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/patients/records"
+method: GET
+headers:
+  Authorization: Bearer {{patient_token}}
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 200 OK', function () {
+          pm.response.to.have.status(200);
+      });
+    language: text/javascript
+order: 1000

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import { 
   Radio, 
@@ -35,7 +36,7 @@ export default function DoctorBroadcasts() {
   const fetchAnnouncements = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/announcements');
+      const res = await fetch(`${API_BASE_URL}/api/announcements`);
       const data = await res.json();
       if (res.ok && data.data?.announcements) {
         setAnnouncements(data.data.announcements);
@@ -60,7 +61,7 @@ export default function DoctorBroadcasts() {
     setIsPublishing(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/announcements', {
+      const res = await fetch(`${API_BASE_URL}/api/announcements`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Michael Scott",
+      "email": "michael.scott@medvault.health",
+      "password": "SecurePass99!",
+      "role": "PATIENT"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 201 Created', function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test('Token returned on registration', function () {
+          var json = pm.response.json();
+          pm.expect(json.data.token).to.be.a('string');
+      });
+    language: text/javascript
+order: 1000

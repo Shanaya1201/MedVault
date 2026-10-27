@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import { 
   Activity, 
@@ -63,7 +64,7 @@ export default function PatientPortal({ onLogout }) {
   useEffect(() => {
     const fetchAnn = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/announcements');
+        const res = await fetch(`${API_BASE_URL}/api/announcements`);
         const data = await res.json();
         if (res.ok && data.data?.announcements) {
           setAnnouncements(data.data.announcements);
@@ -93,7 +94,7 @@ export default function PatientPortal({ onLogout }) {
   };
 
   const handleMessageDoctor = (doctor) => {
-    setTargetDoctorForChat(doctor.id || 'USR-DOCTOR-001');
+    setTargetDoctorForChat(doctor?.id || doctor?.doctorId || doctor?.email || null);
     setActiveNav('messages');
   };
 
@@ -249,7 +250,8 @@ export default function PatientPortal({ onLogout }) {
       </aside>
 
       {/* Main Patient Content Area */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6">
+      <main className={`flex-1 p-4 sm:p-6 lg:p-8 w-full ${activeNav === 'messages' ? 'max-w-[1550px] mx-auto' : 'max-w-7xl mx-auto space-y-6'}`}>
+
         
         {/* VIEW: DASHBOARD */}
         {activeNav === 'dashboard' && (
@@ -468,7 +470,7 @@ export default function PatientPortal({ onLogout }) {
 
         {/* VIEW: MESSAGES */}
         {activeNav === 'messages' && (
-          <div className="animate-fade-in">
+          <div className="animate-fade-in w-full">
             <MessagingCenter targetDoctorId={targetDoctorForChat} />
           </div>
         )}

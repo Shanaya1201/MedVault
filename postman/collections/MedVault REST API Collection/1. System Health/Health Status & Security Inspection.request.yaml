@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/health"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 200', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('System health status is HEALTHY', function () {
+          var json = pm.response.json();
+          pm.expect(json.data.status).to.eql('HEALTHY');
+      });
+    language: text/javascript
+order: 1000

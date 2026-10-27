@@ -1,0 +1,14 @@
+{
+  "name": "medvault",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MedVault — Full-Stack Decentralized Healthcare & Clinical Management Platform",
+  "scripts": {
+    "build": "npm --prefix client run build",
+    "build:client": "npm --prefix client run build",
+    "lint:client": "npm --prefix client run lint",
+    "test:server": "npm --prefix server test",
+    "start:server": "npm --prefix server start",
+    "start": "npm --prefix server start"
+  }
+}

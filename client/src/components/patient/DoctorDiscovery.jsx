@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../../config/api';
 import React, { useState, useEffect } from 'react';
 import { 
   Search, 
@@ -116,7 +117,7 @@ export default function DoctorDiscovery({ onSelectDoctorForBooking, onStartDocto
       }
       params.append('limit', '80');
 
-      const res = await fetch(`http://localhost:5000/api/doctors?${params.toString()}`);
+      const res = await fetch(`${API_BASE_URL}/api/doctors?${params.toString()}`);
       const data = await res.json();
       if (res.ok && data.data?.doctors) {
         setDoctors(data.data.doctors);

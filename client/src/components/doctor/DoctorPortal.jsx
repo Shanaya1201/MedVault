@@ -60,7 +60,7 @@ export default function DoctorPortal({ onLogout }) {
   };
 
   const handleMessagePatient = (patient) => {
-    setTargetPatientForChat(patient.id || 'USR-PATIENT-001');
+    setTargetPatientForChat(patient?.id || patient?.patientId || patient?.email || null);
     setActiveNav('messages');
   };
 
@@ -175,7 +175,8 @@ export default function DoctorPortal({ onLogout }) {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6">
+      <main className={`flex-1 p-4 sm:p-6 lg:p-8 w-full ${activeNav === 'messages' ? 'max-w-[1550px] mx-auto' : 'max-w-7xl mx-auto space-y-6'}`}>
+
         
         {/* VIEW: DASHBOARD */}
         {activeNav === 'dashboard' && (
@@ -205,7 +206,7 @@ export default function DoctorPortal({ onLogout }) {
 
         {/* VIEW: MESSAGES */}
         {activeNav === 'messages' && (
-          <div className="animate-fade-in">
+          <div className="animate-fade-in w-full">
             <MessagingCenter targetDoctorId={targetPatientForChat} />
           </div>
         )}

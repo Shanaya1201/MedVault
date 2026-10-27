@@ -1,0 +1,10 @@
+name: MedVault Production Environment
+values:
+  - key: baseUrl
+    value: 'http://localhost:5000/api'
+  - key: patient_token
+    value: ''
+  - key: doctor_token
+    value: ''
+  - key: admin_token
+    value: ''

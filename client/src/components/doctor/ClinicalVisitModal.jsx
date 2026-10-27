@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../../config/api';
 import React, { useState } from 'react';
 import { 
   X, 
@@ -88,7 +89,7 @@ export default function ClinicalVisitModal({ appointment, isOpen, onClose, onVis
 
     // 3. Persist to backend server if available
     try {
-      await fetch('http://localhost:5000/api/appointments/' + appointment.id, {
+      await fetch(`${API_BASE_URL}/api/appointments/${appointment.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'Completed', notes: doctorNotes })

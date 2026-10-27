@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import { ApiError } from '../utils/ApiError.js';
 import { store } from '../data/store.js';
+import User from '../models/User.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'medvault_super_secure_jwt_secret_key_2026_x89!';
 
@@ -8,7 +10,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'medvault_super_secure_jwt_secret_k
  * JWT Authentication Middleware
  * Validates the Authorization Bearer token from the incoming request.
  */
-export const authenticate = (req, res, next) => {
+export const authenticate = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return next(new ApiError(401, 'Authentication Failed. Missing or malformed Bearer Token.'));
@@ -18,20 +20,41 @@ export const authenticate = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    const user = store.users.find(u => u.id === decoded.id);
+    let user = store.users.find(u => u.id === decoded.id || u.email?.toLowerCase() === decoded.email?.toLowerCase());
 
-    if (!user) {
-      return next(new ApiError(401, 'Authentication Failed. User profile no longer exists.'));
+    if (!user && mongoose.connection.readyState === 1) {
+      try {
+        user = await User.findOne({
+          $or: [
+            { email: decoded.email?.toLowerCase() },
+            ...(mongoose.isValidObjectId(decoded.id) ? [{ _id: decoded.id }] : [])
+          ]
+        });
+      } catch {}
     }
 
-    req.user = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role
-    };
+    if (user) {
+      req.user = {
+        id: user.id || (user._id ? user._id.toString() : decoded.id),
+        name: user.name,
+        email: user.email?.toLowerCase(),
+        role: user.role
+      };
+      return next();
+    }
 
-    next();
+    // If user has a valid signature and basic claims
+    if (decoded && decoded.id && decoded.role) {
+      req.user = {
+        id: decoded.id,
+        name: decoded.name || 'User',
+        email: decoded.email?.toLowerCase() || '',
+        role: decoded.role
+      };
+      return next();
+    }
+
+    return next(new ApiError(401, 'Authentication Failed. User profile no longer exists.'));
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
       return next(new ApiError(401, 'Authentication Token expired. Please login again.'));

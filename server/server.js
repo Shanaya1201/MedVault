@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { connectDB } from './config/db.js';
@@ -25,7 +26,8 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { successResponse } from './utils/apiResponse.js';
 import { initializeSocket } from './socket.js';
 
-dotenv.config();
+const __serverDir = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__serverDir, '.env') });
 
 // Connect MongoDB / Mongoose Data Layer
 connectDB();
