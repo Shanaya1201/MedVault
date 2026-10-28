@@ -12,7 +12,7 @@ import User from '../models/User.js';
  */
 export const getConversations = async (req, res, next) => {
   try {
-    const { id, role, email } = req.user;
+    const { id, role, email, name } = req.user;
     const normalizedEmail = email ? email.toLowerCase() : '';
     let conversations = [];
 
@@ -24,7 +24,8 @@ export const getConversations = async (req, res, next) => {
             $or: [
               { patientId: id },
               { patientEmail: normalizedEmail },
-              { patientId: normalizedEmail }
+              { patientId: normalizedEmail },
+              ...(name ? [{ patientName: name }] : [])
             ]
           };
         } else if (role === 'DOCTOR') {
@@ -32,7 +33,8 @@ export const getConversations = async (req, res, next) => {
             $or: [
               { doctorId: id },
               { doctorEmail: normalizedEmail },
-              { doctorId: normalizedEmail }
+              { doctorId: normalizedEmail },
+              ...(name ? [{ doctorName: name }] : [])
             ]
           };
         }
@@ -48,12 +50,14 @@ export const getConversations = async (req, res, next) => {
       if (role === 'PATIENT') {
         return c.patientId === id || 
                (c.patientEmail && c.patientEmail.toLowerCase() === normalizedEmail) ||
-               c.patientId === normalizedEmail;
+               c.patientId === normalizedEmail ||
+               (c.patientName && name && c.patientName.toLowerCase() === name.toLowerCase());
       }
       if (role === 'DOCTOR') {
         return c.doctorId === id || 
                (c.doctorEmail && c.doctorEmail.toLowerCase() === normalizedEmail) ||
-               c.doctorId === normalizedEmail;
+               c.doctorId === normalizedEmail ||
+               (c.doctorName && name && c.doctorName.toLowerCase() === name.toLowerCase());
       }
       return true;
     });
@@ -198,7 +202,7 @@ export const startConversation = async (req, res, next) => {
 export const getMessages = async (req, res, next) => {
   try {
     const { conversationId } = req.params;
-    const { id, role, email } = req.user;
+    const { id, role, email, name } = req.user;
     const normalizedEmail = email ? email.toLowerCase() : '';
 
     let conv = null;
@@ -220,13 +224,19 @@ export const getMessages = async (req, res, next) => {
       throw new ApiError(404, 'Conversation thread not found.');
     }
 
-    // Role-based authorization
-    const isPatient = (conv.patientId === id) ||
-                      (conv.patientEmail && conv.patientEmail.toLowerCase() === normalizedEmail) ||
-                      (conv.patientId === normalizedEmail);
-    const isDoctor = (conv.doctorId === id) ||
-                     (conv.doctorEmail && conv.doctorEmail.toLowerCase() === normalizedEmail) ||
-                     (conv.doctorId === normalizedEmail);
+    // Role-based authorization: Match by ID, Email, or Name
+    const isPatient = role === 'PATIENT' && (
+      (conv.patientId === id) ||
+      (conv.patientEmail && conv.patientEmail.toLowerCase() === normalizedEmail) ||
+      (conv.patientId === normalizedEmail) ||
+      (conv.patientName && name && conv.patientName.toLowerCase() === name.toLowerCase())
+    );
+    const isDoctor = role === 'DOCTOR' && (
+      (conv.doctorId === id) ||
+      (conv.doctorEmail && conv.doctorEmail.toLowerCase() === normalizedEmail) ||
+      (conv.doctorId === normalizedEmail) ||
+      (conv.doctorName && name && conv.doctorName.toLowerCase() === name.toLowerCase())
+    );
     const isAdmin = role === 'ADMIN';
 
     if (!isPatient && !isDoctor && !isAdmin) {
@@ -286,13 +296,19 @@ export const sendMessage = async (req, res, next) => {
       throw new ApiError(404, 'Conversation thread not found.');
     }
 
-    // Security check
-    const isPatient = (conv.patientId === id) ||
-                      (conv.patientEmail && conv.patientEmail.toLowerCase() === normalizedEmail) ||
-                      (conv.patientId === normalizedEmail);
-    const isDoctor = (conv.doctorId === id) ||
-                     (conv.doctorEmail && conv.doctorEmail.toLowerCase() === normalizedEmail) ||
-                     (conv.doctorId === normalizedEmail);
+    // Security check: Match by participant ID, Email, or Name
+    const isPatient = role === 'PATIENT' && (
+      (conv.patientId === id) ||
+      (conv.patientEmail && conv.patientEmail.toLowerCase() === normalizedEmail) ||
+      (conv.patientId === normalizedEmail) ||
+      (conv.patientName && name && conv.patientName.toLowerCase() === name.toLowerCase())
+    );
+    const isDoctor = role === 'DOCTOR' && (
+      (conv.doctorId === id) ||
+      (conv.doctorEmail && conv.doctorEmail.toLowerCase() === normalizedEmail) ||
+      (conv.doctorId === normalizedEmail) ||
+      (conv.doctorName && name && conv.doctorName.toLowerCase() === name.toLowerCase())
+    );
     const isAdmin = role === 'ADMIN';
 
     if (!isPatient && !isDoctor && !isAdmin) {

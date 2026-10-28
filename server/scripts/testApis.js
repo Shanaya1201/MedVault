@@ -27,6 +27,7 @@ const suites = [
   { name: 'Exp 6: JWT Authentication & RBAC Access Control', script: 'testAuth.js' },
   { name: 'Exp 7: Postman Automated API Collection Validation', script: 'testPostmanRunner.js' },
   { name: 'Exp 8: Real-Time Bidirectional WebSockets Suite', script: 'testRealtimeMessagingSuite.js' },
+  { name: 'Regression: Authentication & Doctor Persona Isolation', script: 'testLoginBugsRegression.js' },
 ];
 
 function checkHealth(port = 5000) {

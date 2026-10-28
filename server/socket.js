@@ -132,12 +132,16 @@ export function initializeSocket(httpServer) {
         const uEmail = socket.user.email?.toLowerCase();
         const uRole = socket.user.role;
 
+        const uName = socket.user.name?.toLowerCase();
+
         const isPatient = (conv.patientId === uId) ||
                           (conv.patientEmail && conv.patientEmail.toLowerCase() === uEmail) ||
-                          (conv.patientId === uEmail);
+                          (conv.patientId === uEmail) ||
+                          (conv.patientName && uName && conv.patientName.toLowerCase() === uName);
         const isDoctor = (conv.doctorId === uId) ||
                          (conv.doctorEmail && conv.doctorEmail.toLowerCase() === uEmail) ||
-                         (conv.doctorId === uEmail);
+                         (conv.doctorId === uEmail) ||
+                         (conv.doctorName && uName && conv.doctorName.toLowerCase() === uName);
         const isAdmin = uRole === 'ADMIN';
 
         if (!isPatient && !isDoctor && !isAdmin) {
@@ -211,12 +215,16 @@ export function initializeSocket(httpServer) {
           const uEmail = socket.user.email?.toLowerCase();
           const uRole = socket.user.role;
 
+          const uName = socket.user.name?.toLowerCase();
+
           const isPatient = (conv.patientId === uId) ||
                             (conv.patientEmail && conv.patientEmail.toLowerCase() === uEmail) ||
-                            (conv.patientId === uEmail);
+                            (conv.patientId === uEmail) ||
+                            (conv.patientName && uName && conv.patientName.toLowerCase() === uName);
           const isDoctor = (conv.doctorId === uId) ||
                            (conv.doctorEmail && conv.doctorEmail.toLowerCase() === uEmail) ||
-                           (conv.doctorId === uEmail);
+                           (conv.doctorId === uEmail) ||
+                           (conv.doctorName && uName && conv.doctorName.toLowerCase() === uName);
           const isAdmin = uRole === 'ADMIN';
 
           if (!isPatient && !isDoctor && !isAdmin) {

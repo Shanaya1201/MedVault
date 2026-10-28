@@ -9,6 +9,10 @@
     "lint:client": "npm --prefix client run lint",
     "test:server": "npm --prefix server test",
     "start:server": "npm --prefix server start",
+    "db:inspect": "npm --prefix server run db:inspect",
+    "db:inspect:target": "npm --prefix server run db:inspect:target",
+    "db:export": "npm --prefix server run db:export",
+    "db:import": "npm --prefix server run db:import",
     "start": "npm --prefix server start"
   }
 }

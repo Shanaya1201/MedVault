@@ -27,6 +27,9 @@ pnpm-debug.log*
 # Postman local scratch
 .postman/
 
+# Data backups & migration exports (Keep local data private)
+server/data/backup/
+
 # OS and IDE files
 .DS_Store
 Thumbs.db

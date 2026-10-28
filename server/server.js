@@ -7,6 +7,7 @@ import hpp from 'hpp';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
+import mongoose from 'mongoose';
 import { fileURLToPath } from 'url';
 
 import { connectDB } from './config/db.js';
@@ -48,8 +49,28 @@ app.use(helmet({
 }));
 
 // 2. Cross-Origin Resource Sharing (CORS)
+const allowedOrigins = [
+  'https://med-vault-iota.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:5000',
+  'http://localhost:3000'
+];
+if (process.env.CLIENT_URL) {
+  const customClient = process.env.CLIENT_URL.replace(/\/+$/, '');
+  if (!allowedOrigins.includes(customClient)) {
+    allowedOrigins.push(customClient);
+  }
+}
+
 app.use(cors({
-  origin: true, // Allow all origins in local development
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (/^https:\/\/[a-zA-Z0-9_-]+\.vercel\.app$/.test(origin)) return callback(null, true);
+    if (origin.endsWith('.onrender.com')) return callback(null, true);
+    if (process.env.NODE_ENV !== 'production') return callback(null, true);
+    callback(new Error(`Origin ${origin} not permitted by MedVault CORS policy.`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -81,17 +102,32 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
-// Health Check Endpoint
+// Health Check Endpoint - Transparently reports live MongoDB state
 app.get('/api/health', (req, res) => {
+  const readyState = mongoose.connection.readyState;
+  const isDbConnected = readyState === 1;
+  const mongoStates = {
+    0: 'DISCONNECTED',
+    1: 'CONNECTED',
+    2: 'CONNECTING',
+    3: 'DISCONNECTING'
+  };
+
   successResponse(res, 200, 'MedVault Secure API & Real-Time Telemetry Operational', {
     status: 'HEALTHY',
     version: '1.0.0',
     uptime: process.uptime(),
+    database: {
+      connected: isDbConnected,
+      state: mongoStates[readyState] || 'UNKNOWN',
+      host: isDbConnected ? mongoose.connection.host : null,
+      name: isDbConnected ? mongoose.connection.name : null
+    },
     security: {
       jwt: 'ENABLED',
       rbac: 'ENABLED',
       messaging: 'ENABLED',
-      mongoose: 'INITIALIZED',
+      mongoose: mongoStates[readyState] || 'DISCONNECTED',
       websocket: 'ENABLED',
       helmet: 'ACTIVE'
     }

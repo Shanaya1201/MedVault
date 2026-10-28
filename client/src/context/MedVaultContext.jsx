@@ -1,13 +1,26 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 
+// Helper to safely restore user profile from localStorage
+const getStoredUser = () => {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem('medvault_user') : null;
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const storedUser = getStoredUser();
+const storedToken = typeof window !== 'undefined' ? localStorage.getItem('medvault_token') : null;
+
 // Initial Application State
 const initialState = {
-  isAuthenticated: true,
-  token: localStorage.getItem('medvault_token') || 'demo_token_authenticated',
-  user: {
+  isAuthenticated: !!(storedToken && storedUser),
+  token: storedToken || null,
+  user: storedUser || {
     id: 'USR-PATIENT-001',
     name: 'Alex Johnson',
-    email: 'patient@medvault.health',
+    email: 'alex.johnson@gmail.com',
     role: 'PATIENT',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
     bloodType: 'O+',
@@ -139,12 +152,14 @@ function medVaultReducer(state, action) {
       if (action.payload.token) {
         localStorage.setItem('medvault_token', action.payload.token);
       }
+      if (action.payload.user) {
+        localStorage.setItem('medvault_user', JSON.stringify(action.payload.user));
+      }
       return {
         ...state,
         isAuthenticated: true,
-        token: action.payload.token || 'authenticated_token',
+        token: action.payload.token || state.token,
         user: {
-          ...state.user,
           ...action.payload.user
         },
         notifications: [
@@ -161,6 +176,7 @@ function medVaultReducer(state, action) {
 
     case 'LOGOUT':
       localStorage.removeItem('medvault_token');
+      localStorage.removeItem('medvault_user');
       return {
         ...state,
         isAuthenticated: false,
@@ -174,29 +190,16 @@ function medVaultReducer(state, action) {
       };
 
     case 'SET_USER_ROLE':
-      let roleUser = {
-        role: action.payload,
-        name: 'Alex Johnson',
-        email: 'patient@medvault.health'
-      };
-      if (action.payload === 'DOCTOR') {
-        roleUser = {
-          role: 'DOCTOR',
-          name: 'Dr. Sarah Mitchell, MD',
-          email: 'doctor@medvault.health'
-        };
-      } else if (action.payload === 'ADMIN') {
-        roleUser = {
-          role: 'ADMIN',
-          name: 'System Administrator',
-          email: 'admin@medvault.health'
-        };
+      // If user is already authenticated with this role, maintain full user profile
+      if (state.user && state.user.role === action.payload && state.isAuthenticated) {
+        return state;
       }
+      // Never overwrite existing user name/email with a hardcoded doctor or patient persona
       return {
         ...state,
         user: {
           ...state.user,
-          ...roleUser
+          role: action.payload
         }
       };
 

@@ -66,16 +66,19 @@ function MedVaultAppContent() {
   };
 
   const handleRoleSelect = (role) => {
-    dispatch({ type: 'SET_USER_ROLE', payload: role });
-    setActiveTab('dashboard');
+    if (state.isAuthenticated && state.user?.role === role) {
+      setActiveTab('dashboard');
+    } else {
+      handleOpenLogin(role);
+    }
   };
 
   const handleLoginSuccess = (userRole) => {
     setActiveTab('dashboard');
   };
 
-  const handleMessageDoctor = (doctorName, appointmentId) => {
-    setTargetDoctorId('USR-DOCTOR-001');
+  const handleMessageDoctor = (doctorIdentifier) => {
+    setTargetDoctorId(doctorIdentifier || null);
     setActiveTab('messages');
   };
 

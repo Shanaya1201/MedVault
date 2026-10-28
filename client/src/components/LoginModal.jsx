@@ -257,37 +257,13 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, initialRol
         onLoginSuccess?.(data.data.user.role);
         onClose();
       } else {
-        if (data.message) {
-          setErrorMsg(data.message);
-        } else {
-          fallbackLogin(emailToUse, roleToUse, targetName);
-        }
+        setErrorMsg(data.message || 'Invalid credentials provided. Check your email and password.');
       }
     } catch (err) {
-      fallbackLogin(emailToUse, roleToUse, targetName);
+      setErrorMsg(`Authentication service error: ${err.message || 'Please check that the backend server is reachable.'}`);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const fallbackLogin = (emailToUse, roleToUse, targetName) => {
-    const preset = rolePresets[roleToUse] || rolePresets.PATIENT;
-    const assignedName = targetName || (roleToUse === 'DOCTOR' ? 'Dr. Sarah Mitchell, MD' : (roleToUse === 'ADMIN' ? 'System Administrator' : 'Alex Johnson'));
-
-    dispatch({
-      type: 'LOGIN_SUCCESS',
-      payload: {
-        token: `jwt_session_${Date.now()}`,
-        user: {
-          id: `USR-${roleToUse}-${Date.now().toString().slice(-4)}`,
-          name: assignedName,
-          email: emailToUse,
-          role: roleToUse
-        }
-      }
-    });
-    onLoginSuccess?.(roleToUse);
-    onClose();
   };
 
   if (!isOpen) return null;

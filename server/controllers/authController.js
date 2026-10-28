@@ -107,31 +107,17 @@ export const login = async (req, res, next) => {
       throw new ApiError(403, `Doctor login requires an approved clinical email domain (${APPROVED_DOCTOR_DOMAIN}).`);
     }
 
-    let user = store.users.find(u => u.email.toLowerCase() === normalizedEmail);
+    let user = null;
     let isMatch = false;
 
-    if (user && user.password) {
-      try {
-        isMatch = await bcrypt.compare(password, user.password);
-      } catch {
-        isMatch = false;
-      }
-    }
-
-    if (!isMatch && mongoose.connection.readyState === 1) {
+    // 1. Check MongoDB first if connected
+    if (mongoose.connection.readyState === 1) {
       const dbUser = await User.findOne({ email: normalizedEmail });
-      if (dbUser) {
-        if (dbUser.password) {
-          try {
-            isMatch = await dbUser.comparePassword(password);
-          } catch {
-            isMatch = false;
-          }
-        }
-        
-        // If seeded demo user or password matches demo password
-        if (!isMatch && (password === 'PatientPass123!' || password === 'DoctorPass123!' || password === 'AdminPass123!')) {
-          isMatch = true;
+      if (dbUser && dbUser.password) {
+        try {
+          isMatch = await dbUser.comparePassword(password);
+        } catch {
+          isMatch = false;
         }
 
         if (isMatch) {
@@ -140,42 +126,31 @@ export const login = async (req, res, next) => {
             name: dbUser.name,
             email: dbUser.email,
             role: dbUser.role,
-            specialty: dbUser.specialty,
-            hospital: dbUser.hospital,
-            bloodType: dbUser.bloodType,
-            allergies: dbUser.allergies,
-            emergencyContact: dbUser.emergencyContact
+            specialty: dbUser.specialty || '',
+            hospital: dbUser.hospital || '',
+            city: dbUser.city || '',
+            area: dbUser.area || '',
+            bloodType: dbUser.bloodType || 'O+',
+            allergies: dbUser.allergies || [],
+            emergencyContact: dbUser.emergencyContact || ''
           };
-          if (!store.users.some(u => u.email === user.email)) {
-            store.users.push(user);
-          }
         }
       }
     }
 
-    // Direct fallback for default demo credentials if in development/offline
-    if (!isMatch && (password === 'PatientPass123!' || password === 'DoctorPass123!' || password === 'AdminPass123!')) {
-      if (normalizedEmail.includes('patient') || normalizedEmail === 'alex.johnson@gmail.com') {
-        user = {
-          id: 'USR-PATIENT-001',
-          name: 'Alex Johnson',
-          email: normalizedEmail,
-          role: 'PATIENT',
-          bloodType: 'O+',
-          allergies: ['Penicillin', 'Latex'],
-          emergencyContact: 'Emma Johnson (+1 555-0192)'
-        };
-        isMatch = true;
-      } else if (normalizedEmail.endsWith(APPROVED_DOCTOR_DOMAIN)) {
-        user = {
-          id: 'USR-DOCTOR-001',
-          name: 'Dr. Sarah Mitchell, MD',
-          email: normalizedEmail,
-          role: 'DOCTOR',
-          specialty: 'Cardiology',
-          hospital: 'Metropolitan General Hospital'
-        };
-        isMatch = true;
+    // 2. If not found in Mongo or MongoDB is offline, check verified store.users
+    if (!user) {
+      const storeUser = store.users.find(u => u.email.toLowerCase() === normalizedEmail);
+      if (storeUser && storeUser.password) {
+        try {
+          isMatch = await bcrypt.compare(password, storeUser.password);
+        } catch {
+          isMatch = false;
+        }
+
+        if (isMatch) {
+          user = { ...storeUser };
+        }
       }
     }
 
@@ -217,7 +192,7 @@ export const login = async (req, res, next) => {
  */
 export const getMe = async (req, res, next) => {
   try {
-    let user = store.users.find(u => u.id === req.user.id);
+    let user = store.users.find(u => u.id === req.user.id || (u.email && u.email.toLowerCase() === req.user.email?.toLowerCase()));
     if (!user && mongoose.connection.readyState === 1) {
       const dbUser = await User.findOne({ email: req.user.email });
       if (dbUser) {

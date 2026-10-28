@@ -6,7 +6,11 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node scripts/testApis.js"
+    "test": "node scripts/testApis.js",
+    "db:inspect": "node scripts/inspectLocalData.js",
+    "db:inspect:target": "node scripts/inspectDestinationDb.js",
+    "db:export": "node scripts/exportLocalDatabase.js",
+    "db:import": "node scripts/importDatabase.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
