@@ -27,6 +27,9 @@ const suites = [
   { name: 'Exp 6: JWT Authentication & RBAC Access Control', script: 'testAuth.js' },
   { name: 'Exp 7: Postman Automated API Collection Validation', script: 'testPostmanRunner.js' },
   { name: 'Exp 8: Real-Time Bidirectional WebSockets Suite', script: 'testRealtimeMessagingSuite.js' },
+  { name: 'Exp 10: Docker & DevOps Configuration Audit', script: 'testDockerConfig.js' },
+  { name: 'Agent 1: Meta WhatsApp Cloud API Suite', script: 'testWhatsAppSuite.js' },
+  { name: 'Multi-Channel Notification Dispatcher Suite', script: 'testNotificationService.js' },
   { name: 'Regression: Authentication & Doctor Persona Isolation', script: 'testLoginBugsRegression.js' },
 ];
 
@@ -47,17 +50,35 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function runScript(name, scriptFile) {
+const SUITE_TIMEOUT_MS = 35000;
+
+async function runScript(name, scriptFile, index, total) {
   return new Promise((resolve) => {
-    console.log(`\n>>> Running: ${name} (${scriptFile})...`);
+    console.log(`\n======================================================`);
+    console.log(`>>> [${index}/${total}] RUNNING: ${name} (${scriptFile})`);
+    console.log(`======================================================`);
     const fullPath = path.join(__dirname, scriptFile);
+    let resolved = false;
+
     const child = spawn(process.execPath, [fullPath], {
       cwd: serverRoot,
       stdio: 'inherit',
       env: process.env,
     });
 
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        console.error(`\n❌ [TIMEOUT] ${name} timed out after ${SUITE_TIMEOUT_MS / 1000}s! Terminating child process...`);
+        try { child.kill('SIGKILL'); } catch {}
+        resolve({ name, passed: false, error: 'TIMEOUT' });
+      }
+    }, SUITE_TIMEOUT_MS);
+
     child.on('close', (code) => {
+      if (resolved) return;
+      resolved = true;
+      clearTimeout(timer);
       if (code === 0) {
         console.log(`[PASS] ${name} completed successfully.`);
         resolve({ name, passed: true, code });
@@ -68,6 +89,9 @@ async function runScript(name, scriptFile) {
     });
 
     child.on('error', (err) => {
+      if (resolved) return;
+      resolved = true;
+      clearTimeout(timer);
       console.error(`[ERROR] ${name} failed to launch: ${err.message}`);
       resolve({ name, passed: false, error: err.message });
     });
@@ -126,8 +150,9 @@ async function main() {
 
   const results = [];
   try {
-    for (const suite of suites) {
-      const res = await runScript(suite.name, suite.script);
+    for (let i = 0; i < suites.length; i++) {
+      const suite = suites[i];
+      const res = await runScript(suite.name, suite.script, i + 1, suites.length);
       results.push(res);
     }
   } finally {

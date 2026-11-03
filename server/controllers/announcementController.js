@@ -3,6 +3,7 @@ import Announcement from '../models/Announcement.js';
 import { successResponse } from '../utils/apiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import { store } from '../data/store.js';
+import { dispatchAdvisoryNotification } from '../services/notificationService.js';
 
 /**
  * GET /api/announcements
@@ -64,6 +65,11 @@ export const createAnnouncement = async (req, res, next) => {
     if (io) {
       io.emit('receive_broadcast', createdDoc);
     }
+
+    // Dispatch WhatsApp Broadcast Notification (Zero PHI, Non-blocking)
+    dispatchAdvisoryNotification({
+      announcement: createdDoc
+    });
 
     successResponse(res, 201, 'Broadcast announcement published successfully', {
       announcement: createdDoc

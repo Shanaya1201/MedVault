@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const TEST_PORT = 5095;
+const TEST_PORT = 5093;
 httpServer.listen(TEST_PORT);
 const BASE_URL = `http://localhost:${TEST_PORT}`;
 const API_URL = `${BASE_URL}/api`;

@@ -3,7 +3,7 @@ import { ApiError } from '../utils/ApiError.js';
 import { successResponse } from '../utils/apiResponse.js';
 import { store } from '../data/store.js';
 import Appointment from '../models/Appointment.js';
-import { dispatchAppointmentNotification } from '../services/notificationService.js';
+import { dispatchAppointmentNotification, dispatchAppointmentReminder } from '../services/notificationService.js';
 
 /**
  * Get all appointments
@@ -116,6 +116,37 @@ export const cancelAppointment = async (req, res, next) => {
     appointment.status = 'Cancelled';
 
     successResponse(res, 200, `Appointment '${id}' has been cancelled.`);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * Trigger Appointment Reminder Notification (WhatsApp & Email)
+ * POST /api/appointments/:id/remind
+ */
+export const sendAppointmentReminder = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const appointment = store.appointments.find(a => a.id === id);
+
+    if (!appointment) {
+      throw new ApiError(404, `Appointment '${id}' not found.`);
+    }
+
+    dispatchAppointmentReminder({
+      appointment,
+      patientName: appointment.patientName,
+      patientEmail: appointment.patientEmail || req.user.email,
+      doctorName: appointment.doctor
+    });
+
+    successResponse(res, 200, `Reminder notification dispatched for appointment '${id}'.`, {
+      appointmentId: id,
+      patient: appointment.patientName,
+      date: appointment.date,
+      time: appointment.time
+    });
   } catch (err) {
     next(err);
   }

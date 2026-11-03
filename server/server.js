@@ -22,6 +22,7 @@ import appointmentRoutes from './routes/appointmentRoutes.js';
 import prescriptionRoutes from './routes/prescriptionRoutes.js';
 import labReportRoutes from './routes/labReportRoutes.js';
 import announcementRoutes from './routes/announcementRoutes.js';
+import whatsappRoutes from './routes/whatsappRoutes.js';
 
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { successResponse } from './utils/apiResponse.js';
@@ -147,6 +148,7 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/labs', labReportRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // Error handlers
 app.use(notFoundHandler);
