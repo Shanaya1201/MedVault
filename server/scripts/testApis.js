@@ -17,6 +17,7 @@ import { spawn } from 'child_process';
 import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { ensureTestUsers } from './ensureTestUsers.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -103,64 +104,18 @@ async function main() {
   console.log('  MEDVAULT MASTER EXPERIMENT TEST RUNNER');
   console.log('======================================================');
 
-  let serverProcess = null;
-  const isHealthy = await checkHealth(5000);
-
-  if (isHealthy) {
-    console.log('[INFO] Backend server already running and healthy on port 5000.');
-  } else {
-    console.log('[INFO] Backend server not detected on port 5000. Launching server process for test run...');
-    serverProcess = spawn(process.execPath, [path.join(serverRoot, 'server.js')], {
-      cwd: serverRoot,
-      stdio: 'pipe',
-      env: {
-        ...process.env,
-        PORT: '5000',
-        NODE_ENV: process.env.NODE_ENV || 'test',
-      },
-    });
-
-    serverProcess.stdout.on('data', (d) => {
-      const line = d.toString();
-      if (line.includes('API & WEBSOCKET ENGINE') || line.includes('Database Connected')) {
-        process.stdout.write(line);
-      }
-    });
-
-    serverProcess.stderr.on('data', (d) => {
-      process.stderr.write(d.toString());
-    });
-
-    let ready = false;
-    for (let i = 0; i < 30; i++) {
-      await sleep(1000);
-      if (await checkHealth(5000)) {
-        ready = true;
-        break;
-      }
-    }
-
-    if (!ready) {
-      console.error('[ERROR] Failed to start backend server within 30 seconds.');
-      if (serverProcess) serverProcess.kill();
-      process.exit(1);
-    }
-    console.log('[INFO] Backend server successfully booted and verified on port 5000.');
+  // Ensure all required test & regression accounts exist in connected database
+  try {
+    await ensureTestUsers();
+  } catch (err) {
+    console.warn('[Seed Guard Warning] Could not ensure test users:', err.message);
   }
 
   const results = [];
-  try {
-    for (let i = 0; i < suites.length; i++) {
-      const suite = suites[i];
-      const res = await runScript(suite.name, suite.script, i + 1, suites.length);
-      results.push(res);
-    }
-  } finally {
-    if (serverProcess) {
-      console.log('\n[INFO] Shutting down temporary backend test server...');
-      serverProcess.kill('SIGINT');
-      await sleep(1000);
-    }
+  for (let i = 0; i < suites.length; i++) {
+    const suite = suites[i];
+    const res = await runScript(suite.name, suite.script, i + 1, suites.length);
+    results.push(res);
   }
 
   console.log('\n======================================================');

@@ -22,7 +22,12 @@ async function runWhatsAppTests() {
 
   const PORT = 5094;
   const server = app.listen(PORT);
-  const baseUrl = `http://localhost:${PORT}/api/whatsapp`;
+  server.on('error', (err) => console.error('Server listen error:', err));
+  await new Promise((resolve, reject) => {
+    server.once('listening', resolve);
+    server.once('error', reject);
+  });
+  const baseUrl = `http://127.0.0.1:${PORT}/api/whatsapp`;
 
   try {
     // -------------------------------------------------------------
@@ -134,7 +139,7 @@ async function runWhatsAppTests() {
     console.log(`  WHATSAPP TEST RESULTS: ${passed} PASSED | ${failed} FAILED`);
     console.log('===========================================================');
   } catch (err) {
-    console.error('[WhatsApp Suite Fatal Error]:', err.message);
+    console.error('[WhatsApp Suite Fatal Error]:', err.message, err.cause);
     failed++;
   } finally {
     server.close();

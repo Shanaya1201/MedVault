@@ -28,7 +28,9 @@ if (!baseUrl) {
   localServer = app.listen(5097);
   baseUrl = 'http://localhost:5097/api';
 }
-const evidenceDir = path.resolve('D:/MedVault_Experiment_Evidence/Exp06_JWT_RBAC');
+const evidenceDir = (process.platform === 'win32' && fs.existsSync('D:\\')) 
+  ? path.resolve('D:/MedVault_Experiment_Evidence/Exp06_JWT_RBAC') 
+  : path.resolve(path.join(process.cwd(), 'reports', 'Exp06_JWT_RBAC'));
 
 // Dual logger: writes to both console and evidence log file
 const logLines = [];
