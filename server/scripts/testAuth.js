@@ -1,4 +1,4 @@
-﻿/**
+/**
  * MedVault Experiment 6: JWT Authentication & Role-Based Access Control (RBAC) Test Suite
  * 
  * Verifies:
@@ -19,9 +19,15 @@
 
 import fs from 'fs';
 import path from 'path';
+import app from '../server.js';
 
-const PORT = process.env.PORT || 5000;
-const baseUrl = process.env.API_BASE_URL || `http://localhost:${PORT}/api`;
+let localServer = null;
+let baseUrl = process.env.API_BASE_URL;
+
+if (!baseUrl) {
+  localServer = app.listen(5097);
+  baseUrl = 'http://localhost:5097/api';
+}
 const evidenceDir = path.resolve('D:/MedVault_Experiment_Evidence/Exp06_JWT_RBAC');
 
 // Dual logger: writes to both console and evidence log file
@@ -377,6 +383,9 @@ async function runAuthTests() {
     log(`[Notice] Could not write evidence log: ${saveErr.message}`);
   }
 
+  if (localServer) {
+    localServer.close();
+  }
   process.exitCode = failed > 0 ? 1 : 0;
 }
 

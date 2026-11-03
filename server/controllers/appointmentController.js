@@ -3,6 +3,7 @@ import { ApiError } from '../utils/ApiError.js';
 import { successResponse } from '../utils/apiResponse.js';
 import { store } from '../data/store.js';
 import Appointment from '../models/Appointment.js';
+import { dispatchAppointmentNotification } from '../services/notificationService.js';
 
 /**
  * Get all appointments
@@ -54,6 +55,14 @@ export const createAppointment = async (req, res, next) => {
         await Appointment.create(newAppointment);
       } catch {}
     }
+
+    // Optional Multi-Channel Notifications (Email & WhatsApp, Zero PHI, Non-Blocking)
+    dispatchAppointmentNotification({
+      appointment: newAppointment,
+      patientName: name,
+      patientEmail: req.user.email,
+      doctorName: newAppointment.doctor
+    });
 
     successResponse(res, 201, 'Consultation appointment scheduled and confirmed', {
       appointment: newAppointment

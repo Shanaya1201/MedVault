@@ -5,6 +5,7 @@ import { store } from '../data/store.js';
 import Conversation from '../models/Conversation.js';
 import Message from '../models/Message.js';
 import User from '../models/User.js';
+import { dispatchNewMessageNotification } from '../services/notificationService.js';
 
 /**
  * Get all conversations for the authenticated user
@@ -376,6 +377,14 @@ export const sendMessage = async (req, res, next) => {
       if (recipientId) io.to(`user_${recipientId}`).emit('conversation_updated', { conversation: conv, message: newMsg });
       if (recipientEmail) io.to(`user_${recipientEmail}`).emit('conversation_updated', { conversation: conv, message: newMsg });
     }
+
+    // Optional Multi-Channel Notifications (Email & WhatsApp, Zero PHI, Non-Blocking)
+    dispatchNewMessageNotification({
+      conversation: conv,
+      message: newMsg,
+      senderRole: role,
+      senderName: name
+    });
 
     successResponse(res, 201, 'Message sent successfully', { message: newMsg });
   } catch (err) {

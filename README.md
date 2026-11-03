@@ -17,11 +17,11 @@
 
 ## 2. Complete Lab Curriculum & Experiment Verification Matrix
 
-MedVault serves as the comprehensive implementation for the full-stack laboratory curriculum covering **Experiments 1 through 9**:
+MedVault serves as the comprehensive implementation for the full-stack laboratory curriculum covering **Experiments 1 through 10**:
 
 | Exp # | Experiment Title | Key Technologies | Implementation Files | Automated Verification Command | Verification Status |
 |:---:|---|---|---|---|:---:|
-| **1** | Build Responsive and Interactive UIs using Tailwind CSS | React 18, Tailwind CSS, Lucide Icons | `client/src/components/MessagingCenter.jsx`, `PatientPortal.jsx`, `DoctorPortal.jsx` | `npm run build` (in `client/`) | **VERIFIED (100%)** |
+| **1** | Build Responsive and Interactive UIs using Tailwind CSS | React 19, Tailwind CSS, Lucide Icons | `client/src/components/MessagingCenter.jsx`, `PatientPortal.jsx`, `DoctorPortal.jsx` | `npm run build` (in `client/`) | **VERIFIED (100%)** |
 | **2** | React Hooks: `useEffect`, `useContext`, & Custom Hooks | React Hooks (`useCallback`, `useMemo`, `useRef`) | `client/src/hooks/useMedVault.js`, `client/src/context/MedVaultContext.jsx` | `npm run lint` (in `client/`) | **VERIFIED (100%)** |
 | **3** | Manage Complex State with Redux / Context API | React Context API, State Reducers | `client/src/context/MedVaultContext.jsx`, `client/src/types/index.js` | `npm run build` (in `client/`) | **VERIFIED (100%)** |
 | **4** | REST API Design with MongoDB & Mongoose Integration | MongoDB, Mongoose Schemas, CRUD | `server/models/`, `server/controllers/`, `server/routes/` | `node scripts/testExp4Mongoose.js` | **VERIFIED (7/7 Pass)** |
@@ -30,6 +30,7 @@ MedVault serves as the comprehensive implementation for the full-stack laborator
 | **7** | Validate RESTful APIs using Postman | Postman Collection v2.1, Newman Runner | `postman/MedVault_API_Collection.json`, `server/scripts/testPostmanRunner.js` | `node scripts/testPostmanRunner.js` | **VERIFIED (17/17 Pass)** |
 | **8** | Enable Real-Time Communication via WebSockets | Socket.IO, JWT Socket Handshake | `server/socket.js`, `client/src/components/MessagingCenter.jsx` | `node scripts/testRealtimeMessagingSuite.js` | **VERIFIED (10/10 Pass)** |
 | **9** | CI/CD Deployment with GitHub Actions + Render/Netlify | GitHub Actions, Netlify, Render | `.github/workflows/ci.yml`, `netlify.toml`, `render.yaml` | `npm test` (in `server/`) & CI Pipeline | **VERIFIED & READY** |
+| **10** | Deploy full-stack apps using DevOps tools and Docker | Docker, Docker Compose, Multi-Stage Builds, Nginx | `Dockerfile`, `docker-compose.yml`, `EXPERIMENT_10.md` | `node server/scripts/testDockerConfig.js` | **VERIFIED (29/29 Pass)** |
 
 ---
 
@@ -208,9 +209,35 @@ MedVault is architected for seamless cloud deployment:
 - Automatically executes on pushes and pull requests to `main`.
 - Evaluates backend test suite with an active MongoDB service container and tests client linting and production bundle compilation.
 
+### Containerization & Orchestration: Docker & Docker Compose (Experiment 10)
+- Documentation: Detailed architecture and lab report available in `EXPERIMENT_10.md`.
+- Quickstart Commands:
+  ```bash
+  # Validate compose syntax
+  docker compose config
+
+  # Build production multi-stage images
+  docker compose build
+
+  # Run full containerized stack (Frontend on :3000, Backend on :5000)
+  docker compose up -d
+
+  # View container health and status
+  docker compose ps
+  ```
+- Profiles: Includes optional isolated `local-mongo` compose profile (`docker compose --profile local-mongo up -d`) to ensure production MongoDB Atlas is preserved by default.
+
 ---
 
-## 9. Submission Evidence
+## 9. Multi-Channel Notification Integration (Email & WhatsApp)
+MedVault includes asynchronous, non-blocking notification extensions:
+- **Email Notifications (Nodemailer / SMTP):** Transmits generic consultation and appointment alerts without exposing protected health information (Zero-PHI).
+- **WhatsApp Cloud API:** Official Meta Business Cloud API integration for SMS/WhatsApp text alerts.
+- Configured via environment variables; internal WebSocket chat remains the primary zero-latency channel.
+
+---
+
+## 10. Submission Evidence
 
 All experiment logs, test reports, and screenshot checklists are archived under:
 ```
@@ -224,10 +251,11 @@ D:\MedVault_Experiment_Evidence\
 ├── Exp07_Postman\
 ├── Exp08_WebSockets\
 ├── Exp09_CICD\
+├── Exp10_Docker_DevOps\
 └── SCREENSHOT_CHECKLIST.md
 ```
 
 ---
 
-## 10. License
+## 11. License
 Academic and educational use. Developed for Full-Stack Laboratory Submissions.

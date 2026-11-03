@@ -11,6 +11,9 @@ node_modules/
 .env.test.local
 .env.production.local
 !.env.example
+!docker-compose.env.example
+!server/.env.example
+!client/.env.example
 
 # Production builds
 dist/

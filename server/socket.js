@@ -5,6 +5,7 @@ import { store } from './data/store.js';
 import User from './models/User.js';
 import Conversation from './models/Conversation.js';
 import Message from './models/Message.js';
+import { dispatchNewMessageNotification } from './services/notificationService.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'medvault_super_secure_jwt_secret_key_2026_x89!';
 
@@ -291,6 +292,14 @@ export function initializeSocket(httpServer) {
 
           if (recipientId) io.to(`user_${recipientId}`).emit('conversation_updated', { conversation: conv, message: newMsg });
           if (recipientEmail) io.to(`user_${recipientEmail}`).emit('conversation_updated', { conversation: conv, message: newMsg });
+
+          // Optional Multi-Channel Notifications (Email & WhatsApp, Zero PHI, Non-Blocking)
+          dispatchNewMessageNotification({
+            conversation: conv,
+            message: newMsg,
+            senderRole: socket.user.role,
+            senderName: socket.user.name
+          });
 
           // Acknowledge sender
           socket.emit('message_sent', { success: true, message: newMsg });

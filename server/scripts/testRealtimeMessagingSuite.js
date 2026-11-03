@@ -3,12 +3,15 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { httpServer } from '../server.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const BASE_URL = 'http://localhost:5000';
+const TEST_PORT = 5095;
+httpServer.listen(TEST_PORT);
+const BASE_URL = `http://localhost:${TEST_PORT}`;
 const API_URL = `${BASE_URL}/api`;
 
 function sleep(ms) {
@@ -467,6 +470,7 @@ async function runTestSuite() {
     sockPB?.disconnect();
     sockDA?.disconnect();
     sockDB?.disconnect();
+    httpServer.close();
     await sleep(200);
     process.exit(process.exitCode || 0);
   }

@@ -26,6 +26,7 @@ import announcementRoutes from './routes/announcementRoutes.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { successResponse } from './utils/apiResponse.js';
 import { initializeSocket } from './socket.js';
+import { getNotificationServiceStatus } from './services/notificationService.js';
 
 const __serverDir = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__serverDir, '.env') });
@@ -123,6 +124,7 @@ app.get('/api/health', (req, res) => {
       host: isDbConnected ? mongoose.connection.host : null,
       name: isDbConnected ? mongoose.connection.name : null
     },
+    notifications: getNotificationServiceStatus(),
     security: {
       jwt: 'ENABLED',
       rbac: 'ENABLED',

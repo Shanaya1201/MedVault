@@ -1,0 +1,109 @@
+# ==============================================================================
+# MedVault Full-Stack Application — Docker Compose Orchestration
+# Experiment 10 — Deploy Full-Stack Apps Using DevOps Tools and Docker
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. MedVault Backend (Node.js + Express + Socket.IO + Telemetry)
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: medvault-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - CLIENT_URL=${CLIENT_URL:-http://localhost:3000}
+      - JWT_SECRET=${JWT_SECRET:-medvault_production_docker_jwt_key_2026_super_secure!}
+      - JWT_EXPIRES_IN=7d
+      # Defaults to MongoDB Atlas cloud URI or container link
+      - MONGODB_URI=${MONGODB_URI}
+      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_MAX=500
+      # Multi-Channel Notification Configuration
+      - EMAIL_NOTIFICATIONS_ENABLED=${EMAIL_NOTIFICATIONS_ENABLED:-false}
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_SECURE=${SMTP_SECURE:-false}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - EMAIL_FROM=${EMAIL_FROM:-"MedVault Health" <no-reply@medvault.health>}
+      - WHATSAPP_NOTIFICATIONS_ENABLED=${WHATSAPP_NOTIFICATIONS_ENABLED:-false}
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID:-}
+      - WHATSAPP_ACCESS_TOKEN=${WHATSAPP_ACCESS_TOKEN:-}
+    networks:
+      - medvault-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:5000/api/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ----------------------------------------------------------------------------
+  # 2. MedVault Frontend (React + Vite + TailwindCSS + Nginx Production Server)
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:5000}
+        - VITE_SOCKET_URL=${VITE_SOCKET_URL:-http://localhost:5000}
+    container_name: medvault-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - medvault-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ----------------------------------------------------------------------------
+  # 3. Optional Local MongoDB Database (Isolated behind 'local-mongo' profile)
+  # Preserves MongoDB Atlas by default so production data is never overwritten.
+  # To run offline with local MongoDB: docker compose --profile local-mongo up -d
+  # ----------------------------------------------------------------------------
+  mongodb:
+    image: mongo:6.0
+    container_name: medvault-local-mongo
+    profiles:
+      - local-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=medvault
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - medvault-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+# ------------------------------------------------------------------------------
+# Bridge Network & Named Volumes
+# ------------------------------------------------------------------------------
+networks:
+  medvault-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+    driver: local
+
