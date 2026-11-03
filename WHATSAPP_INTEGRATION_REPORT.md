@@ -205,3 +205,4 @@ To transition from the automated simulation mode to live WhatsApp dispatches:
      - Set URL: `https://medvault-api-ayz1.onrender.com/api/whatsapp/webhook`
      - Set Verify Token: `medvault_webhook_verify_token_2026`
    - Subscribe to webhook fields: `messages` (to receive delivery receipts).
+

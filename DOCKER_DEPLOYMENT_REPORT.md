@@ -185,3 +185,4 @@ If running Docker Desktop on Windows encounters:
   2. Reboot Windows when prompted.
   3. Launch **Docker Desktop**.
   4. Run `docker compose up -d`.
+
